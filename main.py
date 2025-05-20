@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QApplication, QWidget
-from gui.main_window import MainWindow
+from PyQt6.QtWidgets import QApplication
+from gui.start_window import WelcomeMenu
 import sys
 
 if __name__=="__main__":
     app=QApplication(sys.argv)
-    window=MainWindow()
+    window=WelcomeMenu()
     window.show()
     sys.exit(app.exec())
