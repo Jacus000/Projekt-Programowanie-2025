@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFrame, QFileDialog
+from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFrame, QFileDialog, QMessageBox
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt,QSize
 from gui.main_window import MainWindow
+import pandas as pd
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))#pelna sciezka do pliku start_window nie wazne skad uruchamiamy czyt. z maina
 
@@ -119,7 +120,7 @@ class WelcomeMenu(QWidget):
         file_search.setNameFilter("CSV Files (*.csv);;All Files (*)")
         file_search.setFileMode(QFileDialog.FileMode.ExistingFile)#ograniczenie do jednego pliku 
 
-        if file_search.exec():#przechodzi dalej gdy uzytkownik przejdzie dalej a nie anuluje (potrzebna formulka)
+        if file_search.exec():#przechodzi dalej gdy uzytkownik przejdzie dalej a nie anuluje
             selected_file = file_search.selectedFiles()
             if selected_file:
                 self.selected_file_path = selected_file[0]
@@ -131,9 +132,16 @@ class WelcomeMenu(QWidget):
     
     def proceed_button(self):
         if self.selected_file_path:
-            self.main_window=MainWindow(self.selected_file_path)
-            self.main_window.show()
-            self.close()
-
-
+            try:
+                test_data=pd.read_csv(self.selected_file_path)
+                if test_data.empty:
+                    raise ValueError("File is empty")
+                self.main_window=MainWindow(self.selected_file_path)
+                self.close()
+            except pd.errors.EmptyDataError:
+                QMessageBox.critical(self, "Błąd danych", "Wybrany plik CSV jest pusty")
+            except pd.errors.ParserError:
+                QMessageBox.critical(self, "Błąd składni", "Nieprawidłowy format pliku CSV")
+            except Exception as e:
+                QMessageBox.critical(self, "Błąd", f"Nie można wczytać pliku:\n{str(e)}")
 

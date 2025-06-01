@@ -1,30 +1,54 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QTableView, QLineEdit, QComboBox, QListView
+from PyQt6.QtWidgets import QWidget, QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QTableView, QLineEdit, QComboBox, QTabWidget, QPushButton
 from PyQt6.QtWidgets import QToolButton, QMenu, QCheckBox, QWidgetAction
-from PyQt6.QtGui import QIcon, QStandardItemModel, QStandardItem, QFont, QAction
+from PyQt6.QtGui import QIcon, QFont, QAction
 from PyQt6.QtCore import Qt
 from logic.showdata import PandasModel
 import pandas as pd
 import os
-
+#ogolnie niech ktos zajmie sie stylem bo wyglada to nie najlepiej aktualnie /frontend/ :(
 class MainWindow(QMainWindow):
     def __init__(self,file_path: str):
         super().__init__()
         self.setWindowTitle("Data Shovel")
         self.center_window()
         self.setWindowIcon(QIcon("gui/logo.jpg"))
-        self.setStyleSheet("background-color: black")
+        self.setStyleSheet("background-color: gray")
         
         self.file_path=file_path
         self.data=None
-        #Potrzebujemy tutaj wiecej bramek sprawdzajacych plik albo jeszcze wczesniej w start_window
+
+        self.load_data()
+
+        if self.data is not None:
+            self.tabs=QTabWidget()
+            self.setCentralWidget(self.tabs)
+            self.add_view_tab()
+            self.add_tools_tab()
+            self.show()
+        else:
+            self.close()
+
+    def load_data(self):
         try:
             self.data=pd.read_csv(self.file_path)
+            if self.data.empty:
+                raise ValueError("Plik CSV is empty")
+            return True
         except Exception as e:
-            QMessageBox.critical(self, "Load error", f"Could not load CSV:\n{str(e)}")
-        #data=pd.DataFrame(self.data)
+            QMessageBox.critical(self,"Loading error", f"Nie można wczytać pliku CSV:\n{str(e)}")
+            self.data=None
+            return False
+    def add_view_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout()
         
-        self.table_view=QTableView()
-        self.model=PandasModel(self.data)
+        self.table_view: QTableView = QTableView()
+        """ chcialem poprawic plynnosc scrolowania tabeli ale visual nie znajduje tej pierwszej funkcji zobaczcie czy u was dziala
+        self.table_view.setUniformRowHeights(True)
+        self.table_view.setVerticalScrollMode(QTableView.ScrollMode.ScrollPerPixel)
+        self.table_view.setHorizontalScrollMode(QTableView.ScrollMode.ScrollPerPixel)
+        """
+        self.model = PandasModel(self.data)
         self.table_view.setModel(self.model)
         self.table_view.setSortingEnabled(True)
         self.table_view.setAlternatingRowColors(True)
@@ -50,32 +74,43 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        self.search_field=QLineEdit()
+        self.search_field = QLineEdit()
         self.search_field.setPlaceholderText("Search for a value...")
-        self.search_field.setFixedSize(200,30)
+        self.search_field.setFixedSize(200, 30)
         self.search_field.textChanged.connect(self.search_item)
 
-        self.chose_column=QComboBox()
+        self.chose_column = QComboBox()
         self.chose_column.addItems(self.data.columns)
-        #kolumny do wyboru
-        self.visible_columns=list(self.data.columns)
+        self.visible_columns = list(self.data.columns)
 
-        main_layout=QHBoxLayout()
+        main_layout = QHBoxLayout()
         main_layout.addWidget(QLabel("Search: "))
         main_layout.addWidget(self.search_field)
         main_layout.addWidget(QLabel("from column: "))
         main_layout.addWidget(self.chose_column)
-        self.column_selector=self.create_column_selector()
-        #main_layout.addWidget(QLabel("Select columns:"))
+        self.column_selector = self.create_column_selector()
         main_layout.addWidget(self.column_selector)
         
-        layout=QVBoxLayout()
         layout.addLayout(main_layout)
         layout.addWidget(self.table_view)
+        
+        tab.setLayout(layout)
+        self.tabs.addTab(tab, "Data viewer")
+        
+    def add_tools_tab(self):
+        tab=QWidget()
+        layout=QVBoxLayout()
+        label=QLabel("Data purifing tools: ")
+        label.setStyleSheet("font-size: 16px; color: black")
+        btn=QPushButton("something button")
+        #btn.setStyleSheet()
 
-        central_widget=QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
+        layout.addWidget(label)
+        layout.addWidget(btn)
+
+        tab.setLayout(layout)
+
+        self.tabs.addTab(tab,"Data tools")
 
     def search_item(self,value):
         column_name=self.chose_column.currentText()
