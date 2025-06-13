@@ -3,8 +3,9 @@ from PyQt6.QtWidgets import QToolButton, QMenu, QCheckBox, QWidgetAction
 from PyQt6.QtGui import QIcon, QFont, QAction
 from PyQt6.QtCore import Qt
 from logic.showdata import PandasModel
+from logic.regression import RegressionDashboard
 import pandas as pd
-import os
+
 #ogolnie niech ktos zajmie sie stylem bo wyglada to nie najlepiej aktualnie /frontend/ :(
 class MainWindow(QMainWindow):
     def __init__(self,file_path: str):
@@ -13,7 +14,10 @@ class MainWindow(QMainWindow):
         self.center_window()
         self.setWindowIcon(QIcon("gui/logo.jpg"))
         self.setStyleSheet("background-color: gray")
-        
+
+        menu_bar=self.menuBar()
+        file_menu=menu_bar.addMenu("File")
+        help_menu=menu_bar.addMenu("Help")
         self.file_path=file_path
         self.data=None
 
@@ -24,6 +28,7 @@ class MainWindow(QMainWindow):
             self.setCentralWidget(self.tabs)
             self.add_view_tab()
             self.add_tools_tab()
+            self.regression_tab(self.data)
             self.show()
         else:
             self.close()
@@ -76,7 +81,7 @@ class MainWindow(QMainWindow):
 
         self.search_field = QLineEdit()
         self.search_field.setPlaceholderText("Search for a value...")
-        self.search_field.setFixedSize(200, 30)
+        self.search_field.setFixedSize(200, 30) 
         self.search_field.textChanged.connect(self.search_item)
 
         self.chose_column = QComboBox()
@@ -96,7 +101,10 @@ class MainWindow(QMainWindow):
         
         tab.setLayout(layout)
         self.tabs.addTab(tab, "Data viewer")
-        
+    def plot_data(self):
+        tab=QWidget()
+        layout=QHBoxLayout()
+
     def add_tools_tab(self):
         tab=QWidget()
         layout=QVBoxLayout()
@@ -111,6 +119,10 @@ class MainWindow(QMainWindow):
         tab.setLayout(layout)
 
         self.tabs.addTab(tab,"Data tools")
+
+    def regression_tab(self, data):
+        regression_widget = RegressionDashboard(data)
+        self.tabs.addTab(regression_widget, "Regression Dashboard")
 
     def search_item(self,value):
         column_name=self.chose_column.currentText()

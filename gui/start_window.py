@@ -118,7 +118,7 @@ class WelcomeMenu(QWidget):
         file_search=QFileDialog(self)
         file_search.setWindowTitle("Select CSV file")
         file_search.setNameFilter("CSV Files (*.csv);;All Files (*)")
-        file_search.setFileMode(QFileDialog.FileMode.ExistingFile)#ograniczenie do jednego pliku 
+        file_search.setFileMode(QFileDialog.FileMode.ExistingFile)
 
         if file_search.exec():#przechodzi dalej gdy uzytkownik przejdzie dalej a nie anuluje
             selected_file = file_search.selectedFiles()
