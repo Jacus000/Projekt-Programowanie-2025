@@ -22,14 +22,26 @@ class MatplotligCanvas(FigureCanvas):
 class RegressionDashboard(QWidget):
     def __init__(self, data: pd.DataFrame=None):
         super().__init__()
+        self.data=self.convert_numeric_columns(data)
         self.data = data.select_dtypes(include='number')
         self.init_ui()
+    #zamiana wszystkich danych postaci np 43 na 43.0
+    def convert_numeric_columns(self,data):
+        data=data.copy()
+        for col in data.select_dtypes(include=["string","object"]).columns:
+            try:
+                data[col]=pd.to_numeric(data[col],errors="raise")
+            except:
+                pass
+        return data
 
     def init_ui(self):
         main_layout = QHBoxLayout()
         ## lewa strona wybor zmiennych
         selector_box=QGroupBox("Chose your variables")
         selector_box.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        selector_box.setStyleSheet("background-color: #e6e6e6")
+        selector_box.setMaximumWidth(450)
         selector_layout = QVBoxLayout()
         
         self.x_selector = QListWidget()
@@ -38,7 +50,7 @@ class RegressionDashboard(QWidget):
         self.x_selector.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.x_selector.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.x_selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.x_selector.setMaximumHeight(150)
+        self.x_selector.setMaximumHeight(200)
 
         for col in self.data.columns:
             item = QListWidgetItem(col)
@@ -50,6 +62,18 @@ class RegressionDashboard(QWidget):
         self.y_selector.addItems(self.data.columns)
         
         self.plot_button=QPushButton("Scatter plot")
+        self.plot_button.setStyleSheet("""
+            QPushButton {
+                color: black;
+                border: 2px solid black;
+                padding: 6px 12px;
+                background-color: white;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         self.plot_button.clicked.connect(self.plot_selected_variables)
 
         selector_layout.addWidget(QLabel("Select producing variables:"))
@@ -72,7 +96,6 @@ class RegressionDashboard(QWidget):
         self.canvas.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         main_layout.addWidget(left_widget)
-        right_placeholder = QWidget()
         main_layout.addWidget(self.canvas)
 
         self.setLayout(main_layout)
@@ -95,6 +118,4 @@ class RegressionDashboard(QWidget):
         return x_columns, y_column
     
     def train_model(self):
-        # Placeholder for model training logic
-        #elf.result_label.setText("Training model... (this is a placeholder)")
         pass

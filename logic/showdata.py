@@ -24,6 +24,10 @@ class PandasModel(QAbstractTableModel):
                 return str(self._data.columns[section])
             elif orientation == Qt.Orientation.Vertical:
                 return str(self._data.index[section])
-        return None    
+        return None
+    def updateData(self, new_data: pd.DataFrame):
+        self.beginResetModel()
+        self._data=new_data
+        self.endResetModel()  
 
 
