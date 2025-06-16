@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTableView, QLabel
 from PyQt6.QtCore import Qt
 
-from app.models.pandas_model import PandasModel
+from models.pandas_model import PandasModel
 
 
 class DataTab(QWidget):

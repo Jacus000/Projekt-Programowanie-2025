@@ -4,11 +4,11 @@ from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFrame, QStatusBar, QTabWid
                              QMessageBox)
 from PyQt6.QtGui import QAction
 import pandas as pd
-from app.tabs.data_tab import DataTab
-from app.tabs.plot_tab import PlotTab
-from app.tabs.regression_tab import RegressionTab
-from app.widgets.filter_panel import FilterPanel
-from app.tools.plot_generator import PlotGenerator
+from tabs.data_tab import DataTab
+from tabs.plot_tab import PlotTab
+from tabs.regression_tab import RegressionDashboard
+from widgets.filter_panel import FilterPanel
+from tools.plot_generator import PlotGenerator
 
 
 class MainWindow(QMainWindow):
@@ -33,11 +33,11 @@ class MainWindow(QMainWindow):
         self.main_tabs = QTabWidget()
         self.data_tab = DataTab()
         self.plot_tab = PlotTab()
-        self.regression_tab = RegressionTab()
+        
 
         self.main_tabs.addTab(self.data_tab, "Data")
         self.main_tabs.addTab(self.plot_tab, "Plots")
-        self.main_tabs.addTab(self.regression_tab, "Regression")
+        
 
         main_layout.addWidget(self.main_tabs)
 
@@ -102,6 +102,14 @@ class MainWindow(QMainWindow):
         self.filter_panel.update_controls(self.current_data)
         self.plot_tab.update_controls(self.current_data)
         self.filtered_data = self.current_data.copy()
+
+        for i in range(self.main_tabs.count()):
+            if self.main_tabs.tabText(i) == "Regression":
+                self.main_tabs.removeTab(i)
+                break
+
+        self.regression_tab = RegressionDashboard(self.current_data)
+        self.main_tabs.addTab(self.regression_tab, "Regression")
 
     def apply_filters(self, filters):
         """Apply filters to the data"""
