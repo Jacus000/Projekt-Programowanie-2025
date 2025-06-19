@@ -1,7 +1,9 @@
+import os
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFrame, QStatusBar, QTabWidget, QVBoxLayout, QFileDialog, QLabel,
                              QMessageBox)
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 import pandas as pd
 
 from app.tabs.data_tab import DataTab
@@ -10,11 +12,13 @@ from app.tabs.regression_tab import RegressionDashboard
 from app.widgets.side_panel import SidePanel, FilterWidget, PlotWidget
 from app.tools.plot_generator import PlotGenerator
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Data Shovel")
+        self.setWindowIcon(QIcon(f'{BASE_DIR}/logo.png'))
         self.setGeometry(100, 100, 1200, 800)
         self.current_data = None
         self.filtered_data = None

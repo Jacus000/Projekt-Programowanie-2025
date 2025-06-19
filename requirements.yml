@@ -1,0 +1,11 @@
+name: DSenv
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pyqt
+  - seaborn
+  - matplotlib
+  - scikit-learn
+  - pandas
+  - numpy
