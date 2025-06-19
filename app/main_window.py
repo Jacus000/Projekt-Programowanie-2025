@@ -1,13 +1,13 @@
-# main_window.py
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFrame, QStatusBar, QTabWidget, QVBoxLayout, QFileDialog, QLabel,
                              QMessageBox)
 from PyQt6.QtGui import QAction
 import pandas as pd
+
 from app.tabs.data_tab import DataTab
 from app.tabs.plot_tab import PlotTab
 from app.tabs.regression_tab import RegressionTab
-from app.widgets.filter_panel import FilterPanel
+from app.widgets.side_panel import SidePanel, FilterWidget, PlotWidget
 from app.tools.plot_generator import PlotGenerator
 
 
@@ -41,21 +41,25 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.main_tabs)
 
-        # Filter frame
-        self.filter_panel = FilterPanel()
+        self.filter_widget = FilterWidget()
+        self.plot_widget = PlotWidget()
+
+        # Side panel
+        self.side_panel = SidePanel()
 
         # Add to splitter
         splitter.addWidget(main_frame)
-        splitter.addWidget(self.filter_panel)
+        splitter.addWidget(self.side_panel)
         splitter.setSizes([800, 200])
 
         self.setCentralWidget(splitter)
+
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
         # Connect signals
-        self.filter_panel.filters_applied.connect(self.apply_filters)
-        self.plot_tab.plot_requested.connect(self.generate_plot)
+        self.side_panel.filter_widget.filters_applied.connect(self.apply_filters)
+        self.side_panel.plot_widget.plot_requested.connect(self.generate_plot)
 
     def create_menu_bar(self):
         menubar = self.menuBar()
@@ -99,8 +103,7 @@ class MainWindow(QMainWindow):
     def update_ui_with_data(self):
         """Update all UI elements when new data is loaded"""
         self.data_tab.update_data(self.current_data)
-        self.filter_panel.update_controls(self.current_data)
-        self.plot_tab.update_controls(self.current_data)
+        self.side_panel.update_data(self.current_data)
         self.filtered_data = self.current_data.copy()
 
     def apply_filters(self, filters):
@@ -127,15 +130,21 @@ class MainWindow(QMainWindow):
 
     def generate_plot(self, plot_params):
         """Generate plot based on parameters"""
-        if self.filtered_data is None:
+        if self.filtered_data is None or self.filtered_data.empty:
             QMessageBox.warning(self, "Warning", "No data available to plot")
             return
 
         try:
-            PlotGenerator.generate(
+            figure = PlotGenerator.generate(
                 data=self.filtered_data,
                 **plot_params
             )
+
+            if figure:
+                self.plot_tab.display_plot(figure)
+            else:
+                QMessageBox.warning(self, "Warning", "Failed to generate plot")
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to generate plot:\n{str(e)}")
 
