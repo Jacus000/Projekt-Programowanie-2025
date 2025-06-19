@@ -71,13 +71,7 @@ class PlotGenerator:
                 # Add legend
                 if hue:
                     ax.legend(title=hue)
-
-            elif plttype == 'scatter':
-                sns.scatterplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
-                # Add legend
-                if hue:
-                    ax.legend(title=hue)
-
+            
             elif plttype == 'box':
                 sns.boxplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
                 # Add legend
