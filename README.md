@@ -18,7 +18,7 @@ Data Shovel to uniwersalne narzędzie desktopowe stworzone w PyQt6, które pozwa
 ## Wymagania systemowe
 
 - Python 3.8 lub nowszy
-- Zainstalowane pakiety wymienione w pliku requirements.yml
+- Zainstalowane pakiety wymienione w plikach requirements.(yml, txt)
 
 ## Instalacja
 
@@ -57,7 +57,7 @@ Data Shovel to uniwersalne narzędzie desktopowe stworzone w PyQt6, które pozwa
       ```
 3. Uruchom aplikację: 
     ```bash
-    python main_window.py
+    python main.py
     ```
 
 ## Użycie
