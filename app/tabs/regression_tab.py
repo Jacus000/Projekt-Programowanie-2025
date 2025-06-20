@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from sklearn.preprocessing import StandardScaler
 
 class MatplotligCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -62,6 +63,17 @@ class RegressionDashboard(QWidget):
 
         self.y_selector = QComboBox()
         self.y_selector.addItems(self.data.columns)
+
+        # Dodajemy rozwijane menu z wyborem modelu regresji
+        self.model_selector = QComboBox()
+        self.model_selector.addItems(["Linear", "Ridge", "Lasso"])
+        selector_layout.addWidget(QLabel("Regression model:"))
+        selector_layout.addWidget(self.model_selector)
+
+        # Pole na alpha
+        self.alpha_input = QLineEdit("1.0")
+        self.alpha_input.setPlaceholderText("Alpha (for Ridge/Lasso)")
+        selector_layout.addWidget(self.alpha_input)
 
         self.plot_button=QPushButton("Scatter plot")
         self.plot_button.setStyleSheet("""
@@ -160,13 +172,34 @@ class RegressionDashboard(QWidget):
 
             # Konwersja do typów liczbowych
             for col in X_clean.columns:
-                X_clean[col] = pd.to_numeric(X_clean[col], errors='raise')
+                X_clean.loc[:, col] = pd.to_numeric(X_clean[col], errors='raise')
             y_clean = pd.to_numeric(y_clean, errors='raise')
 
-            # Trening modelu
-            model = LinearRegression()
-            model.fit(X_clean, y_clean)
-            score = model.score(X_clean, y_clean)
+            # Skalowanie cech (standaryzacja)
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X_clean)
+
+            # Pobierz model z wyboru użytkownika
+            model_type = self.model_selector.currentText().lower()
+            alpha = 1.0  # domyślna wartość
+
+            if model_type in ["ridge", "lasso"]:
+                try:
+                    alpha = float(self.alpha_input.text())
+                except ValueError:
+                    QMessageBox.warning(self, "Błąd", "Alpha musi być liczbą zmiennoprzecinkową.")
+                    return
+
+            # Wybierz i trenuj odpowiedni model
+            if model_type == "linear":
+                model = LinearRegression()
+            elif model_type == "ridge":
+                model = Ridge(alpha=alpha)
+            elif model_type == "lasso":
+                model = Lasso(alpha=alpha)
+
+            model.fit(X_scaled, y_clean)
+            score = model.score(X_scaled, y_clean)
 
             QMessageBox.information(self, "Model Trained",
                                     f"Regression model trained successfully.\n\nR² Score: {score:.4f}")
