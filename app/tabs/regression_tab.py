@@ -14,10 +14,23 @@ class MatplotligCanvas(FigureCanvas):
         super().__init__(self.figure)
     def scatter_plot(self, data, x_columns, y_column):
         self.axes.clear()
+
+        # Mapowanie długich nazw na skrócone dla legendy
+        label_map = {
+            "Age": "Age",
+            "Yearly brutto salary (without bonus and stocks) in EUR": "Yearly brutto salary",
+            "Annual brutto salary (without bonus and stocks) one year ago. Only answer if staying in the same country": "Annual brutto salary",
+            "Have you been forced to have a shorter working week (Kurzarbeit)? If yes, how many hours per week": "Shorter working hours"
+        }
+
         for x in x_columns:
-            self.axes.scatter(data[x], data[y_column], label=x)
-        self.axes.set_xlabel(', '.join(x_columns))
-        self.axes.set_ylabel(y_column)
+            short_label = label_map.get(x, x[:25])  # jeśli nie w mapie, skróć do 25 znaków
+            self.axes.scatter(data[x], data[y_column], label=short_label)
+        short_x_labels = [label_map.get(x, x[:25]) for x in x_columns]
+        short_y_label = label_map.get(y_column, y_column[:25])
+        self.axes.set_xlabel(', '.join(short_x_labels))
+        self.axes.set_ylabel(short_y_label)
+
         self.axes.legend()
         self.draw()
 class RegressionDashboard(QWidget):
