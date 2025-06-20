@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QLabel, QLineEdit, QComboBox, QListWidget, QHBoxLayout, QListWidgetItem,QGroupBox,QSizePolicy,QMessageBox
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QLabel, QLineEdit, QComboBox, QListWidget, QHBoxLayout, \
+    QListWidgetItem, QGroupBox, QSizePolicy, QMessageBox, QTextEdit
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 import pandas as pd
@@ -113,6 +114,13 @@ class RegressionDashboard(QWidget):
         self.train_button.clicked.connect(self.train_model)
         selector_layout.addWidget(self.train_button)
 
+        # Pole na wyniki regresji
+        self.result_box = QTextEdit()
+        self.result_box.setReadOnly(True)
+        self.result_box.setStyleSheet("background-color: #f9f9f9; font-family: Consolas; font-size: 10pt;")
+        selector_layout.addWidget(QLabel("Model coefficients:"))
+        selector_layout.addWidget(self.result_box)
+
         selector_box.setLayout(selector_layout)
 
         left_layout=QVBoxLayout()
@@ -200,6 +208,20 @@ class RegressionDashboard(QWidget):
 
             model.fit(X_scaled, y_clean)
             score = model.score(X_scaled, y_clean)
+
+            # Zbuduj tekst z wynikami
+            coef_info = "Intercept (b0): {:.4f}\n".format(model.intercept_)
+            for col, coef in zip(X_clean.columns, model.coef_):
+                coef_info += f"{col}: {coef:.4f}\n"
+
+            html = f"<b>R² Score:</b> {score:.4f}<br><br>"
+            html += f"<b style='color:black;'>Intercept (b0):</b> {model.intercept_:.4f}<br>"
+
+            for col, coef in zip(X_clean.columns, model.coef_):
+                color = "green" if coef >= 0 else "red"
+                html += f"<span style='color:{color};'>{col}: {coef:.4f}</span><br>"
+
+            self.result_box.setHtml(html)
 
             QMessageBox.information(self, "Model Trained",
                                     f"Regression model trained successfully.\n\nR² Score: {score:.4f}")
