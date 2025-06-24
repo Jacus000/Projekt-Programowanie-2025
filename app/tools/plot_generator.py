@@ -7,20 +7,20 @@ from typing import Optional, Dict
 class PlotGenerator:
     @staticmethod
     def generate(
-        data: pd.DataFrame,
-        plttype: str = 'bar',
-        x: Optional[str] = None,
-        y: Optional[str] = None,
-        hue: Optional[str] = None,
-        row: Optional[str] = None,
-        col: Optional[str] = None,
-        filters: Optional[Dict[str, str]] = None,
-        aggregation: Optional[str] = None,
-        sort: Optional[str] = None,
-        palette: str = 'viridis',
-        title: Optional[str] = None,
-        figsize: tuple = (10, 6)
-    ) -> None:
+            data: pd.DataFrame,
+            plttype: str = 'bar',
+            x: Optional[str] = None,
+            y: Optional[str] = None,
+            hue: Optional[str] = None,
+            row: Optional[str] = None,
+            col: Optional[str] = None,
+            filters: Optional[Dict[str, str]] = None,
+            aggregation: Optional[str] = None,
+            sort: Optional[str] = None,
+            palette: str = 'viridis',
+            title: Optional[str] = None,
+            figsize: tuple = (10, 6)
+    ) -> Figure:
         df = data.copy()
 
         # Filter data
@@ -43,7 +43,6 @@ class PlotGenerator:
             elif sort.lower() == 'desc':
                 df = df.sort_values(by=x if x else y, ascending=False)
 
-
         fig = Figure(figsize=figsize)
         ax = fig.add_subplot(111)
 
@@ -51,42 +50,63 @@ class PlotGenerator:
             # Plot type selection
             if plttype == 'bar':
                 if row or col:
-                    # Creating a new figure for FacetGrid
                     fig.clf()
                     g = sns.catplot(data=df, x=x, y=y, hue=hue,
                                     row=row, col=col, kind='bar',
                                     palette=palette, height=figsize[1])
                     fig = g.fig
-                    # Add legend
                     if hue:
-                        ax.legend(title=hue)
+                        g.add_legend()
                 else:
                     sns.barplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
-                    # Add legend
                     if hue:
                         ax.legend(title=hue)
 
             elif plttype == 'line':
-                sns.lineplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
-                # Add legend
-                if hue:
-                    ax.legend(title=hue)
-            
+                if row or col:
+                    fig.clf()
+                    g = sns.relplot(data=df, x=x, y=y, hue=hue,
+                                    row=row, col=col, kind='line',
+                                    palette=palette, height=figsize[1])
+                    fig = g.fig
+                    if hue:
+                        g.add_legend()
+                else:
+                    sns.lineplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
+                    if hue:
+                        ax.legend(title=hue)
+
+            elif plttype == 'scatter':
+                if row or col:
+                    fig.clf()
+                    g = sns.relplot(data=df, x=x, y=y, hue=hue,
+                                    row=row, col=col, kind='scatter',
+                                    palette=palette, height=figsize[1])
+                    fig = g.fig
+                    if hue:
+                        g.add_legend()
+                else:
+                    sns.scatterplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
+                    if hue:
+                        ax.legend(title=hue)
+
             elif plttype == 'box':
                 sns.boxplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
-                # Add legend
                 if hue:
                     ax.legend(title=hue)
 
             elif plttype == 'violin':
                 sns.violinplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
-                # Add legend
                 if hue:
                     ax.legend(title=hue)
 
             elif plttype == 'hist':
                 sns.histplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
-                # Add legend
+                if hue:
+                    ax.legend(title=hue)
+
+            elif plttype == 'kde':
+                sns.kdeplot(data=df, x=x, y=y, hue=hue, palette=palette, ax=ax)
                 if hue:
                     ax.legend(title=hue)
 
@@ -94,11 +114,25 @@ class PlotGenerator:
                 if x and y and aggregation:
                     pivot = df.pivot_table(index=x, columns=y, aggfunc=aggregation)
                     sns.heatmap(pivot, annot=True, fmt='g', ax=ax)
-                # Add legend
-                if hue:
-                    ax.legend(title=hue)
                 else:
                     raise ValueError("To generate Heatmap plot, aggregation is required")
+
+            elif plttype == 'pie':
+                if x and y:
+                    df_agg = df.groupby(x)[y].sum()
+                    df_agg.plot.pie(ax=ax, autopct='%1.1f%%')
+                else:
+                    raise ValueError("Pie chart requires x and y parameters")
+
+            elif plttype == 'area':
+                if x and y:
+                    if hue:
+                        df_pivot = df.pivot(index=x, columns=hue, values=y)
+                        df_pivot.plot.area(ax=ax, stacked=True)
+                    else:
+                        df.plot.area(x=x, y=y, ax=ax)
+                else:
+                    raise ValueError("Area chart requires x and y parameters")
 
             else:
                 raise ValueError(f"Unknown plot type: {plttype}")

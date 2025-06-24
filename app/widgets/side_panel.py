@@ -16,11 +16,6 @@ class SidePanel(QFrame):
     def init_ui(self):
         self.layout = QVBoxLayout(self)
 
-        # Toggle button
-        self.toggle_btn = QPushButton("Switch to Plot Mode")
-        self.toggle_btn.clicked.connect(self.toggle_panels)
-        self.layout.addWidget(self.toggle_btn)
-
         # Create both panels
         self.filter_widget = FilterWidget()
         self.plot_widget = PlotWidget()
@@ -35,11 +30,9 @@ class SidePanel(QFrame):
         if self.filter_widget.isVisible():
             self.filter_widget.hide()
             self.plot_widget.show()
-            self.toggle_btn.setText("Switch to Filter Mode")
         else:
             self.filter_widget.show()
             self.plot_widget.hide()
-            self.toggle_btn.setText("Switch to Plot Mode")
 
     def update_data(self, data):
         """Update both panels with new data"""
@@ -72,8 +65,6 @@ class FilterWidget(QFrame):
     def update_controls(self, data):
         """Update filter controls based on data"""
         self.filter_placeholder.hide()
-        # TODO: fix= clear_controls() - after importing new file num type adds up
-        # Clear existing controls
         for i in reversed(range(self.filter_controls_layout.count())):
             widget = self.filter_controls_layout.itemAt(i).widget()
             if widget:
