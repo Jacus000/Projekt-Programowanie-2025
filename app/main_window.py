@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFrame, QStatusBar, QTabWidget, QVBoxLayout, QFileDialog, QLabel,
                              QMessageBox)
 from PyQt6.QtGui import QAction
@@ -16,12 +16,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Data Shovel")
-        self.setGeometry(100, 100, 1200, 800)
         self.current_data = None
         self.filtered_data = None
 
         self.init_ui()
         self.create_menu_bar()
+
+        QTimer.singleShot(0, self.showMaximized)
+
 
     def init_ui(self):
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -35,15 +37,13 @@ class MainWindow(QMainWindow):
         self.data_tab = DataTab()
         self.plot_tab = PlotTab()
         self.cleaning_tab = DataCleaningTab()
+        self.regression_tab = None  # Będzie tworzony przy ładowaniu danych
 
         self.main_tabs.addTab(self.data_tab, "Data")
         self.main_tabs.addTab(self.plot_tab, "Plots")
         self.main_tabs.addTab(self.cleaning_tab, "Data Cleaning")
 
         main_layout.addWidget(self.main_tabs)
-
-        self.filter_widget = FilterWidget()
-        self.plot_widget = PlotWidget()
 
         # Side panel
         self.side_panel = SidePanel()
@@ -62,6 +62,28 @@ class MainWindow(QMainWindow):
         self.side_panel.filter_widget.filters_applied.connect(self.apply_filters)
         self.side_panel.plot_widget.plot_requested.connect(self.generate_plot)
         self.cleaning_tab.cleaning_applied.connect(self.update_after_cleaning)
+
+        # Connect tab change signal
+        self.main_tabs.currentChanged.connect(self.handle_tab_change)
+
+    def handle_tab_change(self, index):
+        """Handle tab changes to show/hide side panel"""
+        current_tab = self.main_tabs.tabText(index)
+
+        if current_tab in ["Data Cleaning", "Regression"]:
+            # Ukryj cały side panel dla tych zakładek
+            self.side_panel.hide()
+        else:
+            # Pokaż side panel dla innych zakładek
+            self.side_panel.show()
+
+            # Dodatkowa logika dla zakładek z panelami bocznymi
+            if current_tab == "Plots":
+                self.side_panel.filter_widget.hide()
+                self.side_panel.plot_widget.show()
+            else:  # Dla "Data" i innych
+                self.side_panel.plot_widget.hide()
+                self.side_panel.filter_widget.show()
 
     def create_menu_bar(self):
         menubar = self.menuBar()
@@ -148,10 +170,7 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            figure = PlotGenerator.generate(
-                data=self.filtered_data,
-                **plot_params
-            )
+            figure = PlotGenerator.generate(data=self.filtered_data,  **plot_params)
 
             if figure:
                 self.plot_tab.display_plot(figure)

@@ -33,6 +33,8 @@ class MatplotligCanvas(FigureCanvas):
 
         self.axes.legend()
         self.draw()
+
+
 class RegressionDashboard(QWidget):
     def __init__(self, data: pd.DataFrame | None = None):
         super().__init__()
