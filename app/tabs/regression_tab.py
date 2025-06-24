@@ -5,7 +5,7 @@ from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from sklearn.preprocessing import StandardScaler
 
 class MatplotligCanvas(FigureCanvas):
@@ -26,15 +26,15 @@ class MatplotligCanvas(FigureCanvas):
         for x in x_columns:
             short_label = label_map.get(x, x[:25])  # jeśli nie w mapie, skróć do 25 znaków
             self.axes.scatter(data[x], data[y_column], label=short_label)
-        short_x_labels = [label_map.get(x, x[:25]) for x in x_columns]
-        short_y_label = label_map.get(y_column, y_column[:25])
+        short_x_labels = [str(label_map.get(x, x[:25])) for x in x_columns]
+        short_y_label = str(label_map.get(y_column, y_column[:25]))
         self.axes.set_xlabel(', '.join(short_x_labels))
         self.axes.set_ylabel(short_y_label)
 
         self.axes.legend()
         self.draw()
 class RegressionDashboard(QWidget):
-    def __init__(self, data: pd.DataFrame=None):
+    def __init__(self, data: pd.DataFrame | None = None):
         super().__init__()
         self.data = pd.DataFrame()
         if data is not None and not data.empty:
@@ -57,7 +57,6 @@ class RegressionDashboard(QWidget):
         ## lewa strona wybor zmiennych
         selector_box=QGroupBox("Chose your variables")
         selector_box.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        selector_box.setStyleSheet("background-color: #e6e6e6")
         selector_box.setMaximumWidth(450)
         selector_layout = QVBoxLayout()
 
@@ -90,18 +89,6 @@ class RegressionDashboard(QWidget):
         selector_layout.addWidget(self.alpha_input)
 
         self.plot_button=QPushButton("Scatter plot")
-        self.plot_button.setStyleSheet("""
-            QPushButton {
-                color: black;
-                border: 2px solid black;
-                padding: 6px 12px;
-                background-color: white;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-            }
-        """)
         self.plot_button.clicked.connect(self.plot_selected_variables)
 
         selector_layout.addWidget(QLabel("Select producing variables:"))
@@ -112,25 +99,13 @@ class RegressionDashboard(QWidget):
 
         # Przycisk trenowania modelu regresji liniowej
         self.train_button = QPushButton("Train model")
-        self.train_button.setStyleSheet("""
-            QPushButton {
-                color: black;
-                border: 2px solid green;
-                padding: 6px 12px;
-                background-color: #e0ffe0;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #ccffcc;
-            }
-        """)
         self.train_button.clicked.connect(self.train_model)
         selector_layout.addWidget(self.train_button)
 
         # Pole na wyniki regresji
         self.result_box = QTextEdit()
         self.result_box.setReadOnly(True)
-        self.result_box.setStyleSheet("background-color: #f9f9f9; font-family: Consolas; font-size: 10pt;")
+        self.result_box.setStyleSheet("background-color: white; color: black; font-family: Consolas; font-size: 10pt;")
         selector_layout.addWidget(QLabel("Model coefficients:"))
         selector_layout.addWidget(self.result_box)
 
@@ -164,7 +139,7 @@ class RegressionDashboard(QWidget):
         x_columns=[]
         for i in range(self.x_selector.count()):
             item= self.x_selector.item(i)
-            if item.checkState()==Qt.CheckState.Checked:
+            if item and item.checkState()==Qt.CheckState.Checked:
                 x_columns.append(item.text())
         y_column=self.y_selector.currentText()
         return x_columns, y_column

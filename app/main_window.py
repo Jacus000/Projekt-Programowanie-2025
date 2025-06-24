@@ -9,6 +9,7 @@ from app.tabs.plot_tab import PlotTab
 from app.tabs.regression_tab import RegressionDashboard
 from app.widgets.side_panel import SidePanel, FilterWidget, PlotWidget
 from app.tools.plot_generator import PlotGenerator
+from app.tabs.cleaning_tab import DataCleaningTab
 
 
 class MainWindow(QMainWindow):
@@ -33,9 +34,11 @@ class MainWindow(QMainWindow):
         self.main_tabs = QTabWidget()
         self.data_tab = DataTab()
         self.plot_tab = PlotTab()
+        self.cleaning_tab = DataCleaningTab()
 
         self.main_tabs.addTab(self.data_tab, "Data")
         self.main_tabs.addTab(self.plot_tab, "Plots")
+        self.main_tabs.addTab(self.cleaning_tab, "Data Cleaning")
 
         main_layout.addWidget(self.main_tabs)
 
@@ -58,6 +61,7 @@ class MainWindow(QMainWindow):
         # Connect signals
         self.side_panel.filter_widget.filters_applied.connect(self.apply_filters)
         self.side_panel.plot_widget.plot_requested.connect(self.generate_plot)
+        self.cleaning_tab.cleaning_applied.connect(self.update_after_cleaning)
 
     def create_menu_bar(self):
         menubar = self.menuBar()
@@ -100,8 +104,11 @@ class MainWindow(QMainWindow):
 
     def update_ui_with_data(self):
         """Update all UI elements when new data is loaded"""
+        if self.current_data is None:
+            return
         self.data_tab.update_data(self.current_data)
         self.side_panel.update_data(self.current_data)
+        self.cleaning_tab.set_data(self.current_data)
         self.filtered_data = self.current_data.copy()
 
         for i in range(self.main_tabs.count()):
@@ -162,3 +169,9 @@ class MainWindow(QMainWindow):
                           "- Statistical analysis\n"
                           "- Linear regression\n"
                           "- Visualise with plots")
+    
+    def update_after_cleaning(self):
+        """Called when cleaning tab applies changes"""
+        if self.cleaning_tab.df_cleaned is not None:
+            self.current_data = self.cleaning_tab.df_cleaned.copy()
+            self.update_ui_with_data()
