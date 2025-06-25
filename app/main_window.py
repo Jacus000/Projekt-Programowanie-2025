@@ -100,6 +100,10 @@ class MainWindow(QMainWindow):
         open_action.triggered.connect(self.open_file)
         file_menu.addAction(open_action)
 
+        save_action = QAction("Save Data Set", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
         exit_action = QAction("Exit", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
@@ -176,7 +180,11 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            figure = PlotGenerator.generate(data=self.filtered_data,  **plot_params)
+            # Ensure self.filtered_data is a DataFrame
+            data = self.filtered_data
+            if not isinstance(data, pd.DataFrame):
+                data = pd.DataFrame(data)
+            figure = PlotGenerator.generate(data=data, **plot_params)
 
             if figure:
                 self.plot_tab.display_plot(figure)
@@ -200,3 +208,20 @@ class MainWindow(QMainWindow):
         if self.cleaning_tab.df_cleaned is not None:
             self.current_data = self.cleaning_tab.df_cleaned.copy()
             self.update_ui_with_data()
+
+    def save_file(self):
+        if self.current_data is None:
+            QMessageBox.warning(self, "Warning", "No data to save.")
+            return
+        file_name, selected_filter = QFileDialog.getSaveFileName(
+            self, "Save Data File", "",
+            "CSV Files (*.csv);;Excel Files (*.xlsx *.xls)")
+        if file_name:
+            try:
+                if selected_filter.startswith("CSV") or file_name.endswith('.csv'):
+                    self.current_data.to_csv(file_name, index=False)
+                else:
+                    self.current_data.to_excel(file_name, index=False)
+                self.status_bar.showMessage(f"Data saved to {file_name}", 3000)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save file:\n{str(e)}")
