@@ -39,8 +39,7 @@ class DataCleaningTab(QWidget):
             "Manage Missing Values",
             "Remove Duplicates",
             "Change Data Type",
-            "Clean Text",
-            "Remove Outliers"
+            "Clean Text"
         ])
         left_layout.addWidget(self.operation_list)
         
@@ -77,7 +76,6 @@ class DataCleaningTab(QWidget):
         self.remove_dup_btn.clicked.connect(self.remove_duplicates)
         self.convert_btn.clicked.connect(self.change_dtype)
         self.clean_text_btn.clicked.connect(self.clean_text)
-        self.remove_outliers_btn.clicked.connect(self.remove_outliers)
 
     def create_operation_panels(self):
         """Initialize all operation panels"""
@@ -85,7 +83,6 @@ class DataCleaningTab(QWidget):
         self.operation_stack.addWidget(self.create_duplicates_panel())
         self.operation_stack.addWidget(self.create_dtype_panel())
         self.operation_stack.addWidget(self.create_text_clean_panel())
-        self.operation_stack.addWidget(self.create_outliers_panel())
 
     def create_missing_values_panel(self):
         """Panel for handling missing values"""
@@ -197,31 +194,6 @@ class DataCleaningTab(QWidget):
         layout.addWidget(self.clean_text_btn)
         return panel
 
-    def create_outliers_panel(self):
-        """Panel for outlier removal"""
-        panel = QWidget()
-        layout = QVBoxLayout(panel)
-        
-        self.outlier_column = QComboBox()
-        layout.addWidget(QLabel("Numeric column:"))
-        layout.addWidget(self.outlier_column)
-        
-        self.outlier_method = QComboBox()
-        self.outlier_method.addItems(["Z-Score", "IQR", "Percentile"])
-        layout.addWidget(QLabel("Method:"))
-        layout.addWidget(self.outlier_method)
-        
-        self.outlier_threshold = QDoubleSpinBox()
-        self.outlier_threshold.setRange(0, 100)
-        self.outlier_threshold.setValue(3.0)
-        layout.addWidget(QLabel("Threshold:"))
-        layout.addWidget(self.outlier_threshold)
-        
-        self.remove_outliers_btn = QPushButton("Remove Outliers")
-        layout.addWidget(self.remove_outliers_btn)
-        
-        return panel
-
     def set_data(self, df: pd.DataFrame):
         """Set the data to be cleaned"""
         self.df_original = df.copy()
@@ -235,7 +207,6 @@ class DataCleaningTab(QWidget):
         self.update_duplicates_panel()
         self.update_dtype_panel()
         self.update_text_clean_panel()
-        self.update_outliers_panel()
         
     def update_table_view(self):
         """Update the table view with current data"""
@@ -286,17 +257,6 @@ class DataCleaningTab(QWidget):
         self.text_column.addItems(
             col for col in self.df_cleaned.columns 
             if pd.api.types.is_string_dtype(self.df_cleaned[col])
-        )
-
-    def update_outliers_panel(self):
-        """Update outliers panel with current data"""
-        if self.df_cleaned is None:
-            return
-            
-        self.outlier_column.clear()
-        self.outlier_column.addItems(
-            col for col in self.df_cleaned.columns 
-            if pd.api.types.is_numeric_dtype(self.df_cleaned[col])
         )
 
     def fill_missing_values(self):
@@ -393,30 +353,6 @@ class DataCleaningTab(QWidget):
         if self.remove_special.isChecked():
             series = series.str.replace(r'[^a-zA-Z0-9\s]', '', regex=True)
         self.df_cleaned[col] = series
-        self.update_ui()
-
-    def remove_outliers(self):
-        if self.df_cleaned is None:
-            return
-        col = self.outlier_column.currentText()
-        if not col:
-            return
-        method = self.outlier_method.currentText()
-        threshold = self.outlier_threshold.value()
-        if method == "Z-Score":
-            z_scores = abs((self.df_cleaned[col] - self.df_cleaned[col].mean()) / self.df_cleaned[col].std())
-            self.df_cleaned = self.df_cleaned.loc[z_scores < threshold].copy()
-        elif method == "IQR":
-            Q1 = self.df_cleaned[col].quantile(0.25)
-            Q3 = self.df_cleaned[col].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - threshold * IQR
-            upper_bound = Q3 + threshold * IQR
-            self.df_cleaned = self.df_cleaned.loc[(self.df_cleaned[col] >= lower_bound) & (self.df_cleaned[col] <= upper_bound)].copy()
-        elif method == "Percentile":
-            lower_bound = self.df_cleaned[col].quantile(threshold / 100.0)
-            upper_bound = self.df_cleaned[col].quantile(1 - threshold / 100.0)
-            self.df_cleaned = self.df_cleaned.loc[(self.df_cleaned[col] >= lower_bound) & (self.df_cleaned[col] <= upper_bound)].copy()
         self.update_ui()
 
     def apply_changes(self):
