@@ -180,7 +180,6 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            # Ensure self.filtered_data is a DataFrame
             data = self.filtered_data
             if not isinstance(data, pd.DataFrame):
                 data = pd.DataFrame(data)
